@@ -4,18 +4,35 @@
 #include <glut.h>
 #include "Camera.h"
 
-
 int WIDTH = 1280;
 int HEIGHT = 720;
 double xPlayer = 0;
+double jump = 0;
 double zPlayer = 0;
 double zWeapon = 70;
 double depth = 0;
+boolean jumpUp = true;;
 int swap = 0;
 boolean resetLevel = false;
-
+int score = 0;
+int max_score = 100;
+bool l0, l1, l2;
+int light = 0;
+GLboolean level2flag = false;
+GLdouble enemyZ = 0;
+int lightZ = 70;
+float lightx = -3.0f;
+GLboolean lightxf = false;
+float lights = 1.0f;
+GLboolean l = false;
+float scalef = 0.0;
+GLboolean scaleflag = false;
+double rotang = 0;
+bool hit = false;
+double zqube = 0;
 
 GLuint tex;
+GLuint texMarple;
 char title[] = "The Great Hall Escape";
 
 // 3D Projection Options
@@ -46,7 +63,7 @@ public:
 	}
 };
 
-Vector Eye(40, 10, 85);
+Vector Eye(0, 12, 90);
 Vector At(0, -20, 0);
 Vector Up(0, 1, 0);
 
@@ -56,51 +73,35 @@ Model_3DS model_house;
 Model_3DS model_tree;
 Model_3DS player;
 Model_3DS weapon;
+Model_3DS model_car;
 
 // Textures
 GLTexture tex_ground;
+GLTexture tex_wood;
+GLTexture tex_marple;
 
-
-//=======================================================================
-// Lighting Configuration Function
-//=======================================================================
 void InitLightSource()
 {
-
-
-
-
-
-
-
 	glEnable(GL_LIGHTING);
-
 	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
+	//glEnable(GL_LIGHT1);
 	glEnable(GL_LIGHT2);
-
-
-
-	GLfloat lmodel_ambient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 
 	GLfloat l0Diffuse[] = { 1.0f, 0.0f, 0.0f, 1.0f };
 	GLfloat l0Spec[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	GLfloat l0Ambient[] = { .1f, 0.1f, 0.1f, 1.f };
-	GLfloat l0Position[] = { 10.0f, 0.0f, 0.0f, 0 };
+	GLfloat l0Position[] = { 0.0f + lightx, 5.0f, 72.0f, 1 };
 	GLfloat l0Direction[] = { -1.0, 0.0, 0.0 };
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, l0Diffuse);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, l0Ambient);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, l0Spec);
 	glLightfv(GL_LIGHT0, GL_POSITION, l0Position);
-	glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 30.0);
-	glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 90.0);
 	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, l0Direction);
 
 	GLfloat l1Diffuse[] = { 0.0f, 1.0f, 0.0f, 1.0f };
 	GLfloat l1Ambient[] = { 0.1f, .1f, 0.1f, 1.0f };
 	GLfloat l1Spec[] = { 1.0f, 0.0f, 1.0f, 1.0f };
-	GLfloat l1Position[] = { 0.0f, 10.0f, 0.0f, 1 };
+	GLfloat l1Position[] = { 0.0f, 10.0f, 0.0f, l1 };
 	GLfloat l1Direction[] = { 0.0, -1.0, 0.0 };
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, l1Diffuse);
 	glLightfv(GL_LIGHT1, GL_AMBIENT, l1Ambient);
@@ -113,22 +114,37 @@ void InitLightSource()
 	GLfloat l2Diffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	GLfloat l2Ambient[] = { 0.0f, 0.0f, .1f, 1.0f };
 	GLfloat l2Spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	GLfloat l2Position[] = { 0.0f, 0.0f, 10.0f, 1 };
+	GLfloat l2Position[] = { 0.0f + lightx, 5.0f, 72.0f, 1 };
 	GLfloat l2Direction[] = { 0.0, 0.0, -1.0 };
 	glLightfv(GL_LIGHT2, GL_DIFFUSE, l2Diffuse);
 	glLightfv(GL_LIGHT2, GL_AMBIENT, l2Ambient);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, l2Spec);
 	glLightfv(GL_LIGHT2, GL_POSITION, l2Position);
-	glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 30.0);
-	glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 90.0);
 	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, l2Direction);
-
-
-
 }
 
-//=======================================================================
-
+void lightAnim(int time)
+{
+	// l0 = !l0;
+	if (light == 0) {
+		l0 = 1;
+		l1 = 0;
+		l2 = 0;
+	}
+	if (light == 1) {
+		l0 = 0;
+		l1 = 1;
+		l2 = 0;
+	}
+	if (light == 2) {
+		l0 = 0;
+		l1 = 0;
+		l2 = 1;
+	}
+	light++;
+	light %= 3;
+	glutTimerFunc(1500, lightAnim, 0);
+}
 
 void print(int x, int y, char *string)
 {
@@ -147,9 +163,6 @@ void print(int x, int y, char *string)
 	}
 }
 
-//=======================================================================
-// Material Configuration Function
-//======================================================================
 void InitMaterial()
 {
 	// Enable Material Tracking
@@ -168,9 +181,6 @@ void InitMaterial()
 	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 }
 
-//=======================================================================
-// OpengGL Configuration Function
-//=======================================================================
 void myInit(void)
 {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -179,24 +189,13 @@ void myInit(void)
 
 	glLoadIdentity();
 
-	//gluPerspective(fovy, aspectRatio, zNear, zFar);
 	gluPerspective(45.0f, 300 / 300, 0.1f, 300.0f);
-	//*******************************************************************************************//
-	// fovy:			Angle between the bottom and top of the projectors, in degrees.			 //
-	// aspectRatio:		Ratio of width to height of the clipping plane.							 //
-	// zNear and zFar:	Specify the front and back clipping planes distances from camera.		 //
-	//*******************************************************************************************//
 
 	glMatrixMode(GL_MODELVIEW);
 
 	glLoadIdentity();
 
-	gluLookAt(0, Eye.y, Eye.z, At.x, At.y, At.z, Up.x, Up.y, Up.z);
-	//*******************************************************************************************//
-	// EYE (ex, ey, ez): defines the location of the camera.									 //
-	// AT (ax, ay, az):	 denotes the direction where the camera is aiming at.					 //
-	// UP (ux, uy, uz):  denotes the upward orientation of the camera.							 //
-	//*******************************************************************************************//
+	gluLookAt(Eye.x, Eye.y, Eye.z, At.x, At.y, At.z, Up.x, Up.y, Up.z);
 
 	InitLightSource();
 
@@ -207,23 +206,21 @@ void myInit(void)
 	glEnable(GL_NORMALIZE);
 }
 
-//=======================================================================
-// Render Ground Function
-//=======================================================================
 void RenderGround()
 {
 	glDisable(GL_LIGHTING);	// Disable lighting 
-
 	glColor3f(0.6, 0.6, 0.6);	// Dim the ground texture a bit
-
 	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
-
-	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
+	if (!level2flag) {
+		glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
+	}
+	else {
+		glBindTexture(GL_TEXTURE_2D, tex_wood.texture[0]);	// Bind the ground texture
+	}
 
 	glPushMatrix();
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
-	// glRotatef(45, 1, 0, 0);
 	glVertex3f(10, 0, -1200-depth);
 	glTexCoord2f(100, 0);
 	glVertex3f(10, 0, 100-depth);
@@ -235,66 +232,118 @@ void RenderGround()
 	glPopMatrix();
 
 	glEnable(GL_LIGHTING);	// Enable lighting again for other entites coming throung the pipeline.
-
 	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
 }
 
-int random(int lower, int upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
-
-//=======================================================================
-// Display Function
-//=======================================================================
 void myDisplay(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	myInit();
 
 	// Draw Ground
+
 	RenderGround();
 
 	//Draw Sky
-	glDisable(GL_LIGHTING);	// Disable lighting 
+	glDisable(GL_LIGHTING);
 	glPushMatrix();
 	GLUquadricObj * qobj;
 	qobj = gluNewQuadric();
 	glTranslated(50, 0, 0);
 	glRotated(90, 1, 0, 1);
-	glBindTexture(GL_TEXTURE_2D, tex);
+	if(!level2flag)
+		glBindTexture(GL_TEXTURE_2D, tex);
+	else
+		glBindTexture(GL_TEXTURE_2D, texMarple);
 	gluQuadricTexture(qobj, true);
 	gluQuadricNormals(qobj, GL_SMOOTH);
-	gluSphere(qobj, 100, 100, 100);
+	gluSphere(qobj, 120, 120, 120);
 	gluDeleteQuadric(qobj);
 	glPopMatrix();
+	glEnable(GL_LIGHTING);
 
 
 	// Draw Player
+	
 	glPushMatrix();
 	glTranslated(1 + xPlayer, 2,70);
-	glRotatef(-180.f, 0, 1, 0);
-	glScaled(1, 1, 1);
+	glRotatef(-180.0, 0, 1, 0);
+	//glScaled(1, 1, 1);
 	player.Draw();
 	glPopMatrix();
+	
+
+	if (level2flag) {
+
+
+		//Draw enemy
+		glPushMatrix();
+		glTranslated(xPlayer, 2, 79 - enemyZ);
+		glScaled(0.5f, 0.5f, 0.5f);
+		model_car.Draw();
+		glPopMatrix();
+
+	}
 
 	// Draw Weapon
-	
+	glDisable(GL_LIGHTING);
 	int xWeapon = -3;
 	if (!resetLevel) {
-		for (int i = -20; i > -1500; i = i - 15)
+		for (int i = -20; i > -1000; i = i - 15)
 		{
+
 			glPushMatrix();
 			glTranslated(xWeapon, 2, i - depth);
-			glRotatef(-90, 1, 0, 0);
-			glScaled(0.1, 0.1, 0.1);
-			weapon.Draw();
+			
+			
+			if (!level2flag) {
+				glRotatef(-90, 1, 0, 0);
+				glScaled(0.1, 0.1, 0.1);
+				weapon.Draw();
+			}
+			else {
+				glScaled(0.3, 0.4, 0.1);
+				glColor3f(0.0f, 0.5f, 0.0f);
+				model_tree.Draw();
+			}
 			glPopMatrix();
 
-			if (xPlayer == xWeapon && (int(i-depth)) == 69) {
-				depth = 0;
-				break;
+			if (xPlayer+0.4 > xWeapon && xWeapon > xPlayer -0.4 && (int(i-depth)) == 69) {
+				if (!level2flag) {
+					depth = 0;
+					score = 0;
+					break;
+				}
+				else {
+					enemyZ += 1;
+					if (enemyZ == 3) {
+						level2flag = false;
+						max_score = 200;
+						depth = 0;
+						score = 0;
+						enemyZ = 0;
+						break;
+
+
+					}
+				}
+			}
+			else if (int(i - depth) == 69) {
+				if (!level2flag) {
+					score += 1;
+				}
+				else {
+					score += 10;
+				}
+			}
+			if (score == max_score) {
+				if(level2flag == true)
+					exit(EXIT_SUCCESS);
+
+
+				level2flag = !level2flag;
+				score = 0;
+				max_score = 400;
 			}
 
 			switch (xWeapon) {
@@ -305,54 +354,68 @@ void myDisplay(void)
 
 		}
 	}
+	glEnable(GL_LIGHTING);
 	// Display Score
 	char* strScore[20];
-	glTranslatef(0, 10, 0);
+	glPushMatrix();
 	glColor3f(0, 0, 0);	// Dim the ground texture a bit
-	sprintf((char *)strScore, "Score = %d/%d", 0, 10);
-	print(50, 50, (char *)strScore);
+	sprintf((char *)strScore, "Score = %d/%d", score, max_score);
+	print(20, 5, (char *)strScore);
+	glPopMatrix();
+
+
+
+	glPushMatrix();
+	glTranslated(0, 5, 65+zqube);
+	if(!hit)
+		glColor3f(1, 0, 0);
+	else
+		glColor3f(0, 1, 0);
+	
+	glutSolidCube(1);
 	glPopMatrix();
 
 	glutSwapBuffers();
+
+	
 }
 
-//=======================================================================
-// Keyboard Function
-//=======================================================================
 void myKeyboard(unsigned char button, int x, int y)
 {
-	if (button == 'a' && xPlayer > -2) {
-		xPlayer -= 3;
+	if (button == 'a' && xPlayer > -2.8) {
+		xPlayer -= 0.2;
 	}
-	if (button == 'd' && xPlayer < 2) {
-		xPlayer += 3;
+	if (button == 'd' && xPlayer < 2.8) {
+		xPlayer += 0.2;
 	}
 	if (button == 'w')
 		Eye.y += 1;
 	if (button == 's')
 		Eye.y -= 1;
+	if (button == 'f') {
+		Eye.y = 5;
+		Eye.z = 70;
+		Eye.x = xPlayer;
+	}
+	if (button == 'g') {
+		Eye.y = 12;
+		Eye.z = 90;
+		Eye.x = 0;
+	}
 
 	glutPostRedisplay();
 
 }
 
-//=======================================================================
-// Motion Function
-//=======================================================================
+
 void myMotion(int x, int y)
 {	
 	y = HEIGHT - y;
 
 	if (cameraZoom - y > 0)
-	{
-		Eye.x += -0.1;
-		Eye.z += -0.1;
-	}
+		Eye.y += -0.1;
 	else
-	{
-		Eye.x += 0.1;
-		Eye.z += 0.1;
-	}
+		Eye.y += 0.1;
 
 	cameraZoom = y;
 
@@ -360,14 +423,11 @@ void myMotion(int x, int y)
 
 	gluLookAt(Eye.x, Eye.y, Eye.z, At.x, At.y, At.z, Up.x, Up.y, Up.z);	//Setup Camera with modified paramters
 
-	GLfloat light_position[] = { 0.0f, 10.0f, 0.0f, 1.0f };
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	
 	glutPostRedisplay();	//Re-draw scene 
 }
 
-//=======================================================================
-// Mouse Function
-//=======================================================================
+
 void myMouse(int button, int state, int x, int y)
 {
 	y = HEIGHT - y;
@@ -375,12 +435,13 @@ void myMouse(int button, int state, int x, int y)
 	if (state == GLUT_DOWN)
 	{
 		cameraZoom = y;
-	}
+		if(x > 700 && xPlayer < 2.8)
+			xPlayer += 0.2;
+		if (x < 600 && xPlayer > -2.8) 
+			xPlayer -= 0.2;
+	} 
 }
 
-//=======================================================================
-// Reshape Function
-//=======================================================================
 void myReshape(int w, int h)
 {
 	if (h == 0) {
@@ -401,22 +462,94 @@ void myReshape(int w, int h)
 	// go back to modelview matrix so we can move the objects about
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(0, Eye.y, Eye.z, At.x, At.y, At.z, Up.x, Up.y, Up.z);
+	gluLookAt(Eye.x, Eye.y, Eye.z, At.x, At.y, At.z, Up.x, Up.y, Up.z);
 }
 
 void Anim() {
+	//if (l) {
+	//	light -= 0.01;
+	//	
 
+	//}
+	//else {
+	//	light += 0.01;
+	//}
+	//printf("%f/d\n", light);
+	//if (light >= 1) {
+	//	l = true;
+	//}
+	//else {
+	//	if (light <= 0) {
+	//		l = false;
+	//	}
+	//}
+	zqube += 0.1;
+	if (zqube >= 5)
+		hit = true;
 	zPlayer -= 0.01;
-	depth -= 0.05;
-	zWeapon -= 2;
+	if (!level2flag) {
+		depth -= 0.1;
+	}
+	else {
+		depth -= 1.5;
+	}
+	if (!level2flag) {
+		if (lightxf) {
+			lightx -= 0.01;
 
+		}
+		else {
+			lightx += 0.01;
+			/*printf("%f\n", lightx);*/
+		}
+}
+	else {
+		if (lightxf) {
+			lightx -= 0.15;
+
+		}
+		else {
+			lightx += 0.15;
+			printf("%f\n", lightx);
+		}
+
+	}
+	if (lightx >= 3) {
+		lightxf = true;
+	}
+	else {
+		if (lightx <= -3) {
+			lightxf = false;
+		}
+	}
+	zWeapon -= 2;
+	Eye.x = xPlayer;
+	if (scaleflag) {
+		
+		scalef += 0.01;
+	}
+	else {
+		scalef -= 0.01;
+	}
+	if (scalef >= 2) {
+		scaleflag = false;
+	}
+	else {
+		if (scalef <= 0) {
+			scaleflag = true;
+	} }
 	glutPostRedisplay();
+	
+	
+
+	
+	
+
+	
+
 
 }
 
-//=======================================================================
-// Assets Loading Function
-//=======================================================================
 void LoadAssets()
 {
 	// Loading Model files
@@ -424,15 +557,15 @@ void LoadAssets()
 	model_tree.Load("Models/tree/Tree1.3ds");
 	player.Load("Models/human man/human_man_1.2.3ds");
 	weapon.Load("Models/weapon/Artorias_Sword.3ds");
+	model_car.Load("Models/car/ausfb.3ds");
 
 	// Loading texture files
 	tex_ground.Load("Textures/ground.bmp");
+	tex_wood.Load("Textures/wood.bmp");
 	loadBMP(&tex, "Textures/blu-sky-3.bmp", true);
+	loadBMP(&texMarple, "Textures/marple.bmp", true);
 }
 
-//=======================================================================
-// Main Function
-//=======================================================================
 void main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
@@ -455,8 +588,9 @@ void main(int argc, char** argv)
 
 	glutMouseFunc(myMouse);
 
-	glutReshapeFunc(myReshape);
+	glutTimerFunc(0, lightAnim, 0);
 
+	glutReshapeFunc(myReshape);
 
 	LoadAssets();
 	glEnable(GL_DEPTH_TEST);
