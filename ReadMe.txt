@@ -1,4 +1,4 @@
-![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
+<img src="gameScreenShot.png" alt="gameplay">
 
 
 A game implemented using openGL, C++, GLUT Library.
