@@ -1,4 +1,4 @@
-![Screnshot of the game](https://user-images.githubusercontent.com/25152253/70900020-992a5a80-2000-11ea-837f-741c21973fbb.png) 
+![Screnshot of the game](/images/gameScreenShot.png) 
 
 
 A game implemented using openGL, C++, GLUT Library.
